@@ -46,13 +46,20 @@ function cartesianToCanvas(x: number, y: number) {
 const BreatheView = ({ currentBreatheType }: Props) => {
   const circles = new Array(6).fill(0);
   const progress = useSharedValue(0);
-
+  const reanimatedBreatheViewStyles = useAnimatedStyle(() => {
+    const rotateValue = interpolate(progress.value, [0, 1], [-180, 0]);
+    return {
+      transform: [{ rotate: `${rotateValue}deg` }],
+    };
+  });
   useEffect(() => {
     progress.value = withRepeat(withTiming(1, { duration: 4000 }), -1, true);
   }, [progress]);
 
   return (
-    <>
+    <Animated.View
+      style={[StyleSheet.absoluteFill, reanimatedBreatheViewStyles]}
+    >
       {circles.map((_, index) => {
         const alpha = (index * 2 * Math.PI) / 6;
 
@@ -90,7 +97,7 @@ const BreatheView = ({ currentBreatheType }: Props) => {
           </View>
         );
       })}
-    </>
+    </Animated.View>
   );
 };
 
