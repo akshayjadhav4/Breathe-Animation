@@ -1,6 +1,13 @@
 import { Dimensions, StyleSheet, View } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { BreathType } from "../types";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 interface Props {
   currentBreatheType: BreathType;
@@ -9,37 +16,75 @@ interface Props {
 const { width } = Dimensions.get("window");
 const RADIUS = width / 4;
 
+/**
+ *  Polar to Cartesian -->
+ *  x = RADIUS * cos(alpha)
+ *  Y = RADIUS * sin(alpha)
+ *
+ */
+function polarToCartesian(r: number, alpha: number) {
+  "worklet";
+  return {
+    x: RADIUS * Math.cos(alpha),
+    y: RADIUS * Math.sin(alpha),
+  };
+}
+
+/**
+ * Cartesian to Canvas -->
+ *  x'= x + centerX
+ *  y'= -1 * (y + centerY)
+ */
+function cartesianToCanvas(x: number, y: number) {
+  "worklet";
+  return {
+    translateX: x + 0,
+    translateY: -1 * (y + 0),
+  };
+}
+
 const BreatheView = ({ currentBreatheType }: Props) => {
   const circles = new Array(6).fill(0);
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withRepeat(withTiming(1, { duration: 4000 }), -1, true);
+  }, [progress]);
+
   return (
     <>
       {circles.map((_, index) => {
         const alpha = (index * 2 * Math.PI) / 6;
-        /**
-         *  Polar to Cartesian -->
-         *  x = RADIUS * cos(alpha)
-         *  Y = RADIUS * sin(alpha)
-         *
-         */
-        /**
-         * Cartesian to Canvas -->
-         *  x'= x + centerX
-         *  y'= -1 * (y + centerY)
-         */
 
-        const x = RADIUS * Math.cos(alpha);
-        const y = RADIUS * Math.sin(alpha);
-        const translateX = x + 0;
-        const translateY = -1 * (y + 0);
+        const reanimatedStyles = useAnimatedStyle(() => {
+          const { x, y } = polarToCartesian(RADIUS, alpha);
+          const { translateX, translateY } = cartesianToCanvas(x, y);
+          const translateXValue = interpolate(
+            progress.value,
+            [0, 1],
+            [0, translateX]
+          );
+          const translateYValue = interpolate(
+            progress.value,
+            [0, 1],
+            [0, translateY]
+          );
+          const scale = interpolate(progress.value, [0, 1], [0.2, 1]);
+          return {
+            transform: [
+              { translateX: translateXValue },
+              { translateY: translateYValue },
+              { scale },
+            ],
+          };
+        });
         return (
           <View key={index} style={styles.breatheViewContainer}>
-            <View
+            <Animated.View
               style={[
                 { backgroundColor: currentBreatheType.color },
                 styles.breatheCircle,
-                {
-                  transform: [{ translateX }, { translateY }],
-                },
+                reanimatedStyles,
               ]}
             />
           </View>
