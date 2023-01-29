@@ -10,14 +10,35 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Breath } from "./data";
 import { AntDesign } from "@expo/vector-icons";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import BreatheView from "./components/BreatheView";
 import Footer from "./components/Footer";
+import {
+  cancelAnimation,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 const { height, width } = Dimensions.get("window");
 export default function App() {
   const [currentBreathTypeID, setCurrentBreathTypeID] = useState(0);
   const currentBreatheType = Breath[currentBreathTypeID];
+  const progress = useSharedValue(1);
+  const isRunning = useRef(false);
+
+  const onStartPress = useCallback(() => {
+    "worklet";
+    if (isRunning.current === false) {
+      progress.value = withRepeat(withTiming(0, { duration: 3000 }), -1, true);
+      isRunning.current = true;
+    } else {
+      cancelAnimation(progress);
+      progress.value = withTiming(1);
+      isRunning.current = false;
+    }
+  }, [progress]);
+
   return (
     <View style={{ flex: 1, position: "relative" }}>
       <ImageBackground
@@ -50,10 +71,15 @@ export default function App() {
               <AntDesign name="hearto" size={24} color="black" />
             </View>
           </View>
-          <BreatheView currentBreatheType={currentBreatheType} />
+          <BreatheView
+            currentBreatheType={currentBreatheType}
+            progress={progress}
+          />
           <Footer
             currentBreathTypeID={currentBreathTypeID}
             onPress={(id) => setCurrentBreathTypeID(id)}
+            onStartPress={onStartPress}
+            progress={progress}
           />
         </SafeAreaView>
       </ImageBackground>

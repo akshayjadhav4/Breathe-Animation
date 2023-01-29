@@ -1,17 +1,49 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Breath } from "../data";
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 interface FooterProps {
   currentBreathTypeID: number;
   onPress: (id: number) => void;
+  onStartPress: () => void;
+  progress: Animated.SharedValue<number>;
 }
 
-const Footer = ({ currentBreathTypeID, onPress }: FooterProps) => {
+const Footer = ({
+  currentBreathTypeID,
+  onPress,
+  onStartPress,
+  progress,
+}: FooterProps) => {
+  const [hideActionButtons, setHideActionButtons] = useState(false);
+  const hide = useDerivedValue(() => {
+    return hideActionButtons ? 1 : 0;
+  });
+
+  const reanimatedActionButtonsContainer = useAnimatedStyle(() => {
+    return {
+      opacity: hide.value ? withTiming(0) : withTiming(1, { duration: 2000 }),
+    };
+  });
+
   return (
     <View style={styles.footer}>
-      <Text style={styles.footerTitle}>Breath to reduce</Text>
-      <View style={styles.actionButtonsContainer}>
+      <Animated.Text
+        style={[styles.footerTitle, reanimatedActionButtonsContainer]}
+      >
+        Breath to reduce
+      </Animated.Text>
+      <Animated.View
+        style={[
+          styles.actionButtonsContainer,
+          reanimatedActionButtonsContainer,
+        ]}
+      >
         {Breath.map((type) => (
           <Pressable
             key={type.id}
@@ -37,7 +69,41 @@ const Footer = ({ currentBreathTypeID, onPress }: FooterProps) => {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </Animated.View>
+
+      <Pressable
+        style={{
+          backgroundColor: hideActionButtons
+            ? "#000000"
+            : Breath[currentBreathTypeID].color,
+          marginHorizontal: 9,
+          marginVertical: 19,
+          alignItems: "center",
+          padding: 15,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: Breath[currentBreathTypeID].color,
+        }}
+        onPress={() => {
+          if (hideActionButtons) {
+            setHideActionButtons(false);
+          } else {
+            setHideActionButtons(true);
+          }
+          onStartPress();
+        }}
+      >
+        <Text
+          style={{
+            color: "#ffffff",
+            fontWeight: "800",
+            fontSize: 20,
+            textTransform: "uppercase",
+          }}
+        >
+          {hideActionButtons ? "Stop" : "start"}
+        </Text>
+      </Pressable>
     </View>
   );
 };
@@ -56,7 +122,7 @@ const styles = StyleSheet.create({
   },
   footerTitle: {
     color: "#ffff",
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "400",
     alignSelf: "center",
     marginBottom: 15,

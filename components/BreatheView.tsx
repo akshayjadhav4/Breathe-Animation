@@ -1,16 +1,13 @@
 import { Dimensions, StyleSheet, View } from "react-native";
-import React, { useEffect } from "react";
 import { BreathType } from "../types";
 import Animated, {
   interpolate,
   useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
 } from "react-native-reanimated";
 
 interface Props {
   currentBreatheType: BreathType;
+  progress: Animated.SharedValue<number>;
 }
 
 const { width } = Dimensions.get("window");
@@ -43,18 +40,15 @@ function cartesianToCanvas(x: number, y: number) {
   };
 }
 
-const BreatheView = ({ currentBreatheType }: Props) => {
+const BreatheView = ({ currentBreatheType, progress }: Props) => {
   const circles = new Array(8).fill(0);
-  const progress = useSharedValue(0);
+
   const reanimatedBreatheViewStyles = useAnimatedStyle(() => {
     const rotateValue = interpolate(progress.value, [0, 1], [-180, 0]);
     return {
       transform: [{ rotate: `${rotateValue}deg` }],
     };
   });
-  useEffect(() => {
-    progress.value = withRepeat(withTiming(1, { duration: 4000 }), -1, true);
-  }, [progress]);
 
   return (
     <Animated.View
