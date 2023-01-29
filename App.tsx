@@ -12,6 +12,7 @@ import { Breath } from "./data";
 import { AntDesign } from "@expo/vector-icons";
 import { useState } from "react";
 import BreatheView from "./components/BreatheView";
+import Footer from "./components/Footer";
 
 const { height, width } = Dimensions.get("window");
 export default function App() {
@@ -50,6 +51,10 @@ export default function App() {
             </View>
           </View>
           <BreatheView currentBreatheType={currentBreatheType} />
+          <Footer
+            currentBreathTypeID={currentBreathTypeID}
+            onPress={(id) => setCurrentBreathTypeID(id)}
+          />
         </SafeAreaView>
       </ImageBackground>
     </View>
